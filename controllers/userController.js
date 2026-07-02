@@ -19,6 +19,7 @@ const register = async (req, res) => {
     });
     await user.save();
     return res.render("register", { message: "User Registered Successfully" });
+    res.redirect("/");
   } catch (error) {
     console.log(error.message);
   }
@@ -63,13 +64,19 @@ const login = async (req, res) => {
   }
 };
 const loadDashboard = async (req, res) => {
-  try {
+  try { 
     if (!req.session.user_id) {
       return res.redirect("/");
     }
 
     const userData = await User.findById(req.session.user_id);
-    return res.render("dashboard", { user: userData });
+    const users = await User.find({
+      _id: { $ne: req.session.user_id }
+    });
+    return res.render("dashboard", {
+      user: userData,
+      users,
+    });
   } catch (error) {
     console.log(error.message);
   }
