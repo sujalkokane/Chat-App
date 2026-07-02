@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const Chat = require("../models/chatModel");
 const bcrypt = require("bcrypt");
 
 const registerLoad = async (req, res) => {
@@ -64,14 +65,14 @@ const login = async (req, res) => {
   }
 };
 const loadDashboard = async (req, res) => {
-  try { 
+  try {
     if (!req.session.user_id) {
       return res.redirect("/");
     }
 
     const userData = await User.findById(req.session.user_id);
     const users = await User.find({
-      _id: { $ne: req.session.user_id }
+      _id: { $ne: req.session.user_id },
     });
     return res.render("dashboard", {
       user: userData,
@@ -84,11 +85,67 @@ const loadDashboard = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    req.session.destroy(() => {
+    const userId = req.session.user_id;
+
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        isOnline: "0",
+      });
+    }
+
+    req.session.destroy((err) => {
+      if (err) {
+        console.log(err.message);
+        return res.redirect("/dashboard");
+      }
+
+      res.clearCookie("connect.sid");
       return res.redirect("/");
     });
   } catch (error) {
     console.log(error.message);
+  }
+};
+
+const saveChat = async (req, res) => {
+  try {
+    var chat = new Chat({
+      sender: req.body.sender,
+      receiver: req.body.receiver,
+      message: req.body.message,
+    });
+
+    await chat.save();
+    res.status(200).send({ message: "Chat saved successfully" });
+  } catch (err) {
+    res.status(400).send({ message: "Error saving chat", error: err.message });
+  }
+};
+const loadChat = async (req, res) => {
+  try {
+    const chats = await Chat.find({
+      $or: [
+        {
+          sender: req.body.sender,
+          receiver: req.body.receiver,
+        },
+        {
+          sender: req.body.receiver,
+          receiver: req.body.sender,
+        },
+      ],
+    }).sort({ createdAt: 1 });
+
+    return res.status(200).json({
+      success: true,
+      chats,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load chats",
+    });
   }
 };
 
@@ -99,4 +156,6 @@ module.exports = {
   login: login,
   loadDashboard: loadDashboard,
   logout: logout,
+  saveChat: saveChat,
+  loadChat: loadChat,
 };

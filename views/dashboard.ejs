@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-
+<script src="/socket.io/socket.io.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -224,10 +224,11 @@
         /* Welcome card */
         .welcome-card{
             flex:1;
-            padding:20px;
             display:flex;
-            gap:20px;
+            flex-direction:column;
             min-height:560px;
+            height:560px;
+            padding:0;
         }
 
         .welcome-card h3{ font-size:19px; }
@@ -237,6 +238,97 @@
             font-size:13px;
             line-height:1.55;
             max-width:46ch;
+        }
+
+        .chat-header{
+            background:#fff;
+            border-bottom:1px solid var(--line);
+        }
+
+        /* Chat body: this is what stacks the message bubbles */
+        .chat-body{
+            flex:1;
+            display:flex;
+            flex-direction:column;      /* stack messages top to bottom */
+            justify-content:flex-start; /* start from the top, don't center */
+            align-items:stretch;        /* let each row control its own alignment */
+            gap:0;                      /* spacing handled per-bubble via margin-top */
+            padding:20px;
+            overflow-y:auto;
+            background:#f5f7fc;
+        }
+
+        /* Empty-state placeholder — uses a CLASS instead of inline centering
+           styles so it can be cleanly removed with classList.remove() */
+        .chat-empty{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            color:var(--muted);
+            font-size:16px;
+            text-align:center;
+        }
+
+        /* Message row + bubble helper classes (used by JS below) */
+        .msg-row{
+            display:flex;
+            width:100%;
+            margin-top:12px;
+        }
+        .msg-row:first-child{ margin-top:0; }
+
+        .msg-row.left{ justify-content:flex-start; }
+        .msg-row.right{ justify-content:flex-end; }
+
+        .msg-bubble{
+            max-width:70%;
+            padding:10px 14px;
+            font-size:13.5px;
+            line-height:1.4;
+            word-wrap:break-word;
+        }
+
+        .msg-bubble.mine{
+            background:var(--accent);
+            color:#fff;
+            border-radius:16px 16px 16px 4px;
+        }
+
+        .msg-bubble.theirs{
+            background:#fff;
+            color:var(--ink);
+            border-radius:16px 16px 4px 16px;
+            box-shadow:0 1px 2px rgba(0,0,0,.08);
+        }
+
+        .chat-input-bar{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:14px 18px;
+            background:#fff;
+            border-top:1px solid var(--line);
+        }
+
+        .chat-input-bar input{
+            flex:1;
+            border:none;
+            outline:none;
+            background:#f1f3f9;
+            border-radius:24px;
+            padding:14px 18px;
+            font-size:14px;
+        }
+
+        .chat-input-bar button{
+            width:52px;
+            height:52px;
+            border:none;
+            border-radius:50%;
+            background:var(--accent);
+            color:#fff;
+            font-size:16px;
+            cursor:pointer;
         }
 
         /* Signature stat row -- chat-bubble shaped */
@@ -294,7 +386,7 @@
 
     <ul>
         <li><a href="/dashboard" class="active"><i class="bi bi-grid-1x2-fill"></i>Dashboard</a></li>
-        <li><a href="/logout"><i class="bi bi-box-arrow-right"></i>Logout</a></li>
+        <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i>Logout</a></li>
     </ul>
 
     <div class="sidebar-foot">Chat App &copy; 2026</div>
@@ -330,13 +422,12 @@
                     <img src="/<%= user.image %>" alt="Profile">
                     <div class="status"></div>
                 </div>
-
                 <h4><%= user.name %></h4>
                 <p><%= user.email %></p>
 
-                <div class="profile-tags">
-                    <span>Online</span>
-                </div>
+    <div class="profile-tags">
+        <span>Online</span>
+    </div>
 
             </div>
 
@@ -344,8 +435,15 @@
                 <h4 style="margin-bottom:16px;">Chats</h4>
 
                 <% users.forEach(function(u){ %>
-                    <div onclick="location.href='/chat/<%= u._id %>'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;cursor:pointer;transition:.2s;margin-bottom:8px;">
-                        <img src="/<%= u.image %>" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+                    <div onclick="openChat('<%= u._id %>','<%= u.name %>','/<%= u.image %>', '<%= u.isOnline %>')" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;cursor:pointer;transition:.2s;margin-bottom:8px;">
+                        <div style="position:relative;width:50px;height:50px;flex-shrink:0;">
+                            <img src="/<%= u.image %>" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+
+                            <span
+                                id="status-<%= u._id %>"
+                                style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:<%= u.isOnline == '1' ? '#2fbf85' : '#ccc' %>;">
+                            </span>
+                        </div>
                         <div>
                             <div style="font-weight:600;"><%= u.name %></div>
                             <small style="color:var(--muted);">Tap to chat</small>
@@ -354,17 +452,29 @@
                 <% }) %>
             </div>
             </div>
-
             <div class="card welcome-card">
-                <div style="width:100%;display:flex;flex-direction:column;height:100%;">
+                <div style="display:flex;flex-direction:column;height:100%;width:100%;">
 
-                    <div style="padding:18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;">
-                        <i class="bi bi-chat-dots-fill" style="font-size:22px;color:var(--accent);"></i>
-                        <h3 style="margin:0;">Chat Window</h3>
+                    <div id="chat-header" class="chat-header" style="display:none;padding:16px 20px;align-items:center;gap:12px;">
+                        <img id="chat-user-image" src="https://via.placeholder.com/44" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+                        <div style="flex:1;">
+                            <div id="chat-user-name" style="font-weight:600;">Select a user</div>
+                            <small id="chat-user-status" style="color:#2fbf85;">Offline</small>
+                        </div>
                     </div>
 
-                    <div style="flex:1;display:flex;justify-content:center;align-items:center;color:var(--muted);font-size:18px;">
+                    <div id="chat-box" class="chat-body chat-empty">
                         Select a user from the left to start chatting.
+                    </div>
+
+                    <div id="chat-input" class="chat-input-bar" style="display:none;">
+                        <input
+                            id="message"
+                            type="text"
+                            placeholder="Type a message...">
+                        <button id="send-btn">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
                     </div>
 
                 </div>
@@ -377,11 +487,160 @@
 </div>
 
 <script>
+let receiver_id = "";
+
 function toggleMenu(){
     document.getElementById("sidebar").classList.toggle("hide");
     document.getElementById("content").classList.toggle("full");
 }
-</script>
 
+// Builds a single message row+bubble and appends it to the chat box
+function appendMessage(chatBox, message, isMine){
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (isMine ? 'left' : 'right');
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble ' + (isMine ? 'mine' : 'theirs');
+    bubble.textContent = message; // textContent avoids HTML/script injection
+
+    row.appendChild(bubble);
+    chatBox.appendChild(row);
+}
+
+function openChat(id, name, image, isOnline) {
+    receiver_id = id;
+    document.getElementById('chat-header').style.display = 'flex';
+    document.getElementById('chat-input').style.display = 'flex';
+
+    const chatBox = document.getElementById('chat-box');
+    chatBox.classList.remove('chat-empty'); // remove centering placeholder styles
+    chatBox.innerHTML = '';
+
+    document.getElementById('chat-user-name').innerText = name;
+    document.getElementById('chat-user-image').src = image;
+    const status = document.getElementById('chat-user-status');
+    status.innerText = isOnline === '1' ? 'Online' : 'Offline';
+    status.style.color = isOnline === '1' ? '#2fbf85' : '#888';
+
+    fetch('/load-chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            sender: sender_id,
+            receiver: receiver_id
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log('load-chat response:', data);
+        chatBox.innerHTML = '';
+
+        const chats = data.chats || data.data || [];
+
+        chats.forEach(chat => {
+            const sender = String(chat.sender || chat.sender_id);
+            const receiver = String(chat.receiver || chat.receiver_id);
+
+            const isMine = sender === String(sender_id);
+
+            appendMessage(chatBox, chat.message, isMine);
+        });
+
+        if (chats.length === 0) {
+            chatBox.innerHTML = '<div style="margin:auto;color:#8b8fa3">No messages yet. Start the conversation!</div>';
+        }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(err => console.error(err));
+}
+</script>
+<script>
+// Save chat when Send is clicked
+document.getElementById('send-btn').addEventListener('click', function () {
+    const message = document.getElementById('message').value.trim();
+
+    if (!message) return;
+
+    if (!receiver_id) {
+        alert('Please select a user first.');
+        return;
+    }
+
+    socket.emit('new-chat', {
+        sender: sender_id,
+        receiver: receiver_id,
+        message: message
+    });
+
+    document.getElementById('message').value = '';
+});
+
+// Allow pressing Enter to send
+document.getElementById('message').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') {
+        document.getElementById('send-btn').click();
+    }
+});
+</script>
+<script>
+// Disconnect socket before logging out
+const logoutBtn = document.getElementById('logoutBtn');
+
+logoutBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    socket.disconnect();
+
+    setTimeout(() => {
+        window.location.href = '/logout';
+    }, 100);
+});
+</script>
+<script>
+    var sender_id = '<%= user._id %>';
+   const socket = io("/user-namespace", {
+  query: {
+    token: sender_id
+  }
+});
+
+// Listen for users coming online
+socket.on('online-user', function(data) {
+    const statusElement = document.getElementById('status-' + data.userId);
+    if (statusElement) {
+        statusElement.style.backgroundColor = '#2fbf85';
+    }
+});
+
+// Listen for users going offline
+socket.on('offline-user', function(data) {
+    const statusElement = document.getElementById('status-' + data.userId);
+    if (statusElement) {
+        statusElement.style.backgroundColor = '#ccc';
+    }
+});
+
+// Receive new chats in real time
+socket.on('load-new-chat', function (data) {
+    const chatBox = document.getElementById('chat-box');
+    const sender = String(data.sender || data.sender_id);
+    const receiver = String(data.receiver || data.receiver_id);
+
+    if (!((sender === sender_id && receiver === receiver_id) ||
+          (sender === receiver_id && receiver === sender_id))) {
+        return;
+    }
+
+    chatBox.classList.remove('chat-empty');
+    const isMine = sender === sender_id;
+    appendMessage(chatBox, data.message, isMine);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+</script>
 </body>
 </html>
