@@ -14,10 +14,12 @@
             --ink:#171923;
             --panel:#1b1e2b;
             --panel-2:#22263a;
+            --panel-line:rgba(255,255,255,.08);
             --bg:#f3f4f8;
             --card:#ffffff;
             --line:#e9eaf2;
             --muted:#8b8fa3;
+            --muted-dark:#7c8098;
             --accent:#5b6bf6;
             --accent-2:#ff7a5c;
             --accent-soft:#eef0fe;
@@ -37,9 +39,9 @@
 
         h1,h2,h3,h4{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
 
-        /* ---------- Sidebar ---------- */
+        /* ---------- Sidebar (now the chat list) ---------- */
         .sidebar{
-            width:196px;
+            width:290px;
             height:100vh;
             position:fixed;
             left:0; top:0;
@@ -56,6 +58,8 @@
             align-items:center;
             gap:10px;
             padding:20px 18px;
+            border-bottom:1px solid var(--panel-line);
+            flex-shrink:0;
         }
 
         .sidebar-header .mark{
@@ -64,6 +68,7 @@
             background:linear-gradient(135deg, var(--accent), var(--accent-2));
             display:flex; align-items:center; justify-content:center;
             font-size:15px; font-weight:700;
+            flex-shrink:0;
         }
 
         .sidebar-header span{
@@ -71,49 +76,151 @@
             font-size:16px;
         }
 
-        .sidebar ul{
-            list-style:none;
-            margin-top:10px;
-            padding:0 10px;
+        /* Scrollable chat/user list */
+        .chat-list{
             flex:1;
+            overflow-y:auto;
+            padding:12px 10px;
         }
 
-        .sidebar ul li a{
-            color:#a7abc2;
-            text-decoration:none;
+        .chat-list-label{
+            font-size:11px;
+            font-weight:700;
+            text-transform:uppercase;
+            letter-spacing:.06em;
+            color:var(--muted-dark);
+            padding:6px 10px 10px;
+        }
+
+        .chat-list-item{
             display:flex;
             align-items:center;
-            gap:11px;
-            padding:10px 12px;
-            border-radius:10px;
+            gap:12px;
+            padding:10px;
+            border-radius:12px;
+            cursor:pointer;
+            transition:.15s;
+            margin-bottom:4px;
+        }
+
+        .chat-list-item:hover{
+            background:var(--panel-2);
+        }
+
+        .chat-list-item.active{
+            background:var(--accent);
+        }
+
+        .chat-list-item .avatar-wrap{
+            position:relative;
+            width:44px; height:44px;
+            flex-shrink:0;
+        }
+
+        .chat-list-item .avatar-wrap img{
+            width:44px; height:44px;
+            border-radius:50%;
+            object-fit:cover;
+            display:block;
+        }
+
+        .chat-list-item .avatar-wrap .dot{
+            position:absolute; bottom:1px; right:1px;
+            width:11px; height:11px;
+            border:2px solid var(--panel);
+            border-radius:50%;
+        }
+
+        .chat-list-item .name{
+            font-weight:600;
             font-size:13.5px;
-            font-weight:500;
+            color:#fff;
+        }
+
+        .chat-list-item .sub{
+            font-size:11.5px;
+            color:var(--muted-dark);
+            margin-top:1px;
+        }
+
+        .chat-list-item.active .sub{
+            color:rgba(255,255,255,.75);
+        }
+
+        /* Bottom of sidebar: my profile, then logout below it */
+        .sidebar-footer{
+            border-top:1px solid var(--panel-line);
+            padding:14px 16px 16px;
+            flex-shrink:0;
+        }
+
+        .sidebar-footer .me{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:6px 4px 12px;
+        }
+
+        .sidebar-footer .me img{
+            width:38px; height:38px;
+            border-radius:50%;
+            object-fit:cover;
+            flex-shrink:0;
+        }
+
+        .sidebar-footer .me .name{
+            font-weight:600;
+            font-size:13.5px;
+            color:#fff;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            max-width:150px;
+        }
+
+        .sidebar-footer .me .status{
+            font-size:11.5px;
+            color:var(--ok);
+            display:flex;
+            align-items:center;
+            gap:5px;
+            margin-top:2px;
+        }
+
+        .sidebar-footer .me .status::before{
+            content:"";
+            width:6px; height:6px;
+            border-radius:50%;
+            background:var(--ok);
+        }
+
+        .logout-btn{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            width:100%;
+            padding:10px;
+            border-radius:10px;
+            background:var(--panel-2);
+            color:#e2536a;
+            text-decoration:none;
+            font-weight:600;
+            font-size:13px;
             transition:.15s;
         }
 
-        .sidebar ul li a i{ font-size:15px; width:16px; text-align:center; }
-
-        .sidebar ul li a:hover{
-            background:var(--panel-2);
-            color:#fff;
+        .logout-btn:hover{
+            background:#2a2438;
         }
 
-        .sidebar ul li a.active{
-            background:var(--accent);
-            color:#fff;
-        }
-
-        .sidebar-foot{
-            padding:14px 18px 20px;
-            border-top:1px solid rgba(255,255,255,.08);
-            font-size:11.5px;
-            color:#6a6e85;
-        }
-
-        /* ---------- Content ---------- */
+        /* ---------- Content (now just the chat area) ---------- */
         .content{
-            margin-left:196px;
+            margin-left:290px;
             transition:margin-left .25s ease;
+            height:100vh;
+            display:flex;
+            flex-direction:column;
         }
 
         .topbar{
@@ -123,7 +230,7 @@
             align-items:center;
             justify-content:space-between;
             border-bottom:1px solid var(--line);
-            position:sticky; top:0; z-index:5;
+            flex-shrink:0;
         }
 
         .menu-btn{
@@ -153,113 +260,32 @@
             background:var(--accent-2);
         }
 
-        .topbar-avatar{
-            width:34px; height:34px;
-            border-radius:50%;
-            object-fit:cover;
-        }
-
-        .dashboard-body{ padding:22px 26px 30px; }
-
-        /* ---------- Cards ---------- */
-        .card{
-            background:var(--card);
-            border:1px solid var(--line);
-            border-radius:var(--radius);
-            box-shadow:0 1px 2px rgba(20,22,40,.03);
-        }
-
-        .row{ display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
-
-        /* Profile card */
-        .profile-card{
-            width:280px;
-            flex:none;
-            padding:26px 20px;
-            text-align:center;
-        }
-
-        .avatar-ring{
-            width:78px; height:78px;
-            margin:0 auto 14px;
-            border-radius:50%;
-            padding:3px;
-            background:linear-gradient(135deg, var(--accent), var(--accent-2));
-            position:relative;
-        }
-
-        .avatar-ring img{
-            width:100%; height:100%;
-            border-radius:50%;
-            object-fit:cover;
-            border:2.5px solid var(--card);
-            display:block;
-        }
-
-        .avatar-ring .status{
-            position:absolute; bottom:2px; right:2px;
-            width:14px; height:14px;
-            border-radius:50%;
-            background:var(--ok);
-            border:2.5px solid var(--card);
-        }
-
-        .profile-card h4{ font-size:16px; margin-bottom:2px; }
-        .profile-card p{ color:var(--muted); font-size:12.5px; }
-
-        .profile-tags{
-            display:flex; justify-content:center; gap:8px;
-            margin-top:16px;
-        }
-
-        .profile-tags span{
-            font-size:11px;
-            font-weight:600;
-            padding:5px 10px;
-            border-radius:20px;
-            background:var(--accent-soft);
-            color:var(--accent);
-        }
-
-        /* Welcome card */
-        .welcome-card{
+        /* Chat section fills the entire right side */
+        .chat-section{
             flex:1;
             display:flex;
             flex-direction:column;
-            min-height:560px;
-            height:560px;
-            padding:0;
-        }
-
-        .welcome-card h3{ font-size:19px; }
-        .welcome-card .sub{
-            color:var(--muted);
-            margin-top:6px;
-            font-size:13px;
-            line-height:1.55;
-            max-width:46ch;
+            min-height:0;
+            overflow:hidden;
         }
 
         .chat-header{
             background:#fff;
             border-bottom:1px solid var(--line);
+            flex-shrink:0;
         }
 
-        /* Chat body: this is what stacks the message bubbles */
         .chat-body{
             flex:1;
             display:flex;
-            flex-direction:column;      /* stack messages top to bottom */
-            justify-content:flex-start; /* start from the top, don't center */
-            align-items:stretch;        /* let each row control its own alignment */
-            gap:0;                      /* spacing handled per-bubble via margin-top */
-            padding:20px;
+            flex-direction:column;
+            justify-content:flex-start;
+            align-items:stretch;
+            padding:20px 26px;
             overflow-y:auto;
             background:#f5f7fc;
         }
 
-        /* Empty-state placeholder — uses a CLASS instead of inline centering
-           styles so it can be cleanly removed with classList.remove() */
         .chat-empty{
             display:flex;
             justify-content:center;
@@ -269,7 +295,6 @@
             text-align:center;
         }
 
-        /* Message row + bubble helper classes (used by JS below) */
         .msg-row{
             display:flex;
             width:100%;
@@ -281,7 +306,7 @@
         .msg-row.right{ justify-content:flex-end; }
 
         .msg-bubble{
-            max-width:70%;
+            max-width:60%;
             padding:10px 14px;
             font-size:13.5px;
             line-height:1.4;
@@ -305,9 +330,10 @@
             display:flex;
             align-items:center;
             gap:12px;
-            padding:14px 18px;
+            padding:14px 26px;
             background:#fff;
             border-top:1px solid var(--line);
+            flex-shrink:0;
         }
 
         .chat-input-bar input{
@@ -329,48 +355,19 @@
             color:#fff;
             font-size:16px;
             cursor:pointer;
+            flex-shrink:0;
         }
-
-        /* Signature stat row -- chat-bubble shaped */
-        .stat-row{
-            display:flex; gap:12px;
-            margin-top:20px;
-            flex-wrap:wrap;
-        }
-
-        .bubble-stat{
-            flex:1 1 120px;
-            padding:16px 16px 14px;
-            border-radius:16px 16px 16px 4px;
-            color:#fff;
-            position:relative;
-            overflow:hidden;
-        }
-
-        .bubble-stat::after{
-            content:"";
-            position:absolute;
-            width:60px; height:60px;
-            border-radius:50%;
-            background:rgba(255,255,255,.12);
-            top:-20px; right:-20px;
-        }
-
-        .bubble-stat h4{ font-size:24px; }
-        .bubble-stat p{ font-size:11.5px; opacity:.85; margin-top:2px; }
-        .bubble-stat i{ font-size:14px; opacity:.9; }
-
-        .bubble-stat.b1{ background:linear-gradient(135deg,#5b6bf6,#4453d6); }
-        .bubble-stat.b2{ background:linear-gradient(135deg,#2fbf85,#1f9c6c); }
-        .bubble-stat.b3{ background:linear-gradient(135deg,#ff7a5c,#f0553a); }
 
         /* Collapsed sidebar */
-        .sidebar.hide{ margin-left:-196px; }
+        .sidebar.hide{ margin-left:-290px; }
         .content.full{ margin-left:0; }
 
-        @media (max-width:576px){
-            .dashboard-body{ padding:16px; }
-            .topbar{ padding:12px 16px; }
+        @media (max-width:768px){
+            .sidebar{ width:260px; }
+            .content{ margin-left:260px; }
+            .sidebar.hide{ margin-left:-260px; }
+            .chat-body{ padding:16px; }
+            .chat-input-bar{ padding:12px 16px; }
         }
     </style>
 </head>
@@ -384,12 +381,42 @@
         <span>Chat App</span>
     </div>
 
-    <ul>
-        <li><a href="/dashboard" class="active"><i class="bi bi-grid-1x2-fill"></i>Dashboard</a></li>
-        <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i>Logout</a></li>
-    </ul>
+    <div class="chat-list" id="chat-list">
+        <div class="chat-list-label">Chats</div>
 
-    <div class="sidebar-foot">Chat App &copy; 2026</div>
+        <% users.forEach(function(u){ %>
+            <div
+                class="chat-list-item"
+                id="chat-item-<%= u._id %>"
+                onclick="openChat('<%= u._id %>','<%= u.name %>','/<%= u.image %>', '<%= u.isOnline %>')">
+                <div class="avatar-wrap">
+                    <img src="/<%= u.image %>">
+                    <span
+                        id="status-<%= u._id %>"
+                        class="dot"
+                        style="background:<%= u.isOnline == '1' ? '#2fbf85' : '#5c6079' %>;">
+                    </span>
+                </div>
+                <div>
+                    <div class="name"><%= u.name %></div>
+                    <div class="sub">Tap to chat</div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="me">
+            <img src="/<%= user.image %>" alt="">
+            <div>
+                <div class="name"><%= user.name %></div>
+                <div class="status">Online</div>
+            </div>
+        </div>
+        <a href="#" id="logoutBtn" class="logout-btn">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
 
 </div>
 
@@ -397,89 +424,38 @@
 <div class="content" id="content">
 
     <div class="topbar">
-
         <div style="display:flex; align-items:center; gap:16px;">
             <i class="bi bi-list menu-btn" onclick="toggleMenu()"></i>
-            <span class="topbar-title">Dashboard</span>
+            <span class="topbar-title">Messages</span>
         </div>
 
         <div class="topbar-right">
             <div class="bell"><i class="bi bi-bell-fill"></i><span class="dot"></span></div>
-            <img class="topbar-avatar" src="/<%= user.image %>" alt="">
+        </div>
+    </div>
+
+    <div class="chat-section">
+
+        <div id="chat-header" class="chat-header" style="display:none;padding:16px 26px;align-items:center;gap:12px;">
+            <img id="chat-user-image" src="https://via.placeholder.com/44" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+            <div style="flex:1;">
+                <div id="chat-user-name" style="font-weight:600;">Select a user</div>
+                <small id="chat-user-status" style="color:#2fbf85;">Offline</small>
+            </div>
         </div>
 
-    </div>
+        <div id="chat-box" class="chat-body chat-empty">
+            Select a user from the left to start chatting.
+        </div>
 
-    <div class="dashboard-body">
-
-        <div class="row">
-
-            <div style="width:300px;display:flex;flex-direction:column;gap:18px;">
-
-            <div class="card profile-card">
-
-                <div class="avatar-ring">
-                    <img src="/<%= user.image %>" alt="Profile">
-                    <div class="status"></div>
-                </div>
-                <h4><%= user.name %></h4>
-                <p><%= user.email %></p>
-
-    <div class="profile-tags">
-        <span>Online</span>
-    </div>
-
-            </div>
-
-            <div class="card" style="padding:18px;max-height:360px;overflow-y:auto;">
-                <h4 style="margin-bottom:16px;">Chats</h4>
-
-                <% users.forEach(function(u){ %>
-                    <div onclick="openChat('<%= u._id %>','<%= u.name %>','/<%= u.image %>', '<%= u.isOnline %>')" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;cursor:pointer;transition:.2s;margin-bottom:8px;">
-                        <div style="position:relative;width:50px;height:50px;flex-shrink:0;">
-                            <img src="/<%= u.image %>" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
-
-                            <span
-                                id="status-<%= u._id %>"
-                                style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:<%= u.isOnline == '1' ? '#2fbf85' : '#ccc' %>;">
-                            </span>
-                        </div>
-                        <div>
-                            <div style="font-weight:600;"><%= u.name %></div>
-                            <small style="color:var(--muted);">Tap to chat</small>
-                        </div>
-                    </div>
-                <% }) %>
-            </div>
-            </div>
-            <div class="card welcome-card">
-                <div style="display:flex;flex-direction:column;height:100%;width:100%;">
-
-                    <div id="chat-header" class="chat-header" style="display:none;padding:16px 20px;align-items:center;gap:12px;">
-                        <img id="chat-user-image" src="https://via.placeholder.com/44" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
-                        <div style="flex:1;">
-                            <div id="chat-user-name" style="font-weight:600;">Select a user</div>
-                            <small id="chat-user-status" style="color:#2fbf85;">Offline</small>
-                        </div>
-                    </div>
-
-                    <div id="chat-box" class="chat-body chat-empty">
-                        Select a user from the left to start chatting.
-                    </div>
-
-                    <div id="chat-input" class="chat-input-bar" style="display:none;">
-                        <input
-                            id="message"
-                            type="text"
-                            placeholder="Type a message...">
-                        <button id="send-btn">
-                            <i class="bi bi-send-fill"></i>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-
+        <div id="chat-input" class="chat-input-bar" style="display:none;">
+            <input
+                id="message"
+                type="text"
+                placeholder="Type a message...">
+            <button id="send-btn">
+                <i class="bi bi-send-fill"></i>
+            </button>
         </div>
 
     </div>
@@ -507,8 +483,16 @@ function appendMessage(chatBox, message, isMine){
     chatBox.appendChild(row);
 }
 
+function setActiveChatItem(id){
+    document.querySelectorAll('.chat-list-item').forEach(el => el.classList.remove('active'));
+    const el = document.getElementById('chat-item-' + id);
+    if (el) el.classList.add('active');
+}
+
 function openChat(id, name, image, isOnline) {
     receiver_id = id;
+    setActiveChatItem(id);
+
     document.getElementById('chat-header').style.display = 'flex';
     document.getElementById('chat-input').style.display = 'flex';
 
@@ -541,10 +525,7 @@ function openChat(id, name, image, isOnline) {
 
         chats.forEach(chat => {
             const sender = String(chat.sender || chat.sender_id);
-            const receiver = String(chat.receiver || chat.receiver_id);
-
             const isMine = sender === String(sender_id);
-
             appendMessage(chatBox, chat.message, isMine);
         });
 
@@ -611,7 +592,12 @@ logoutBtn.addEventListener('click', function (e) {
 socket.on('online-user', function(data) {
     const statusElement = document.getElementById('status-' + data.userId);
     if (statusElement) {
-        statusElement.style.backgroundColor = '#2fbf85';
+        statusElement.style.background = '#2fbf85';
+    }
+    if (String(receiver_id) === String(data.userId)) {
+        const chatStatus = document.getElementById('chat-user-status');
+        chatStatus.innerText = 'Online';
+        chatStatus.style.color = '#2fbf85';
     }
 });
 
@@ -619,7 +605,12 @@ socket.on('online-user', function(data) {
 socket.on('offline-user', function(data) {
     const statusElement = document.getElementById('status-' + data.userId);
     if (statusElement) {
-        statusElement.style.backgroundColor = '#ccc';
+        statusElement.style.background = '#5c6079';
+    }
+    if (String(receiver_id) === String(data.userId)) {
+        const chatStatus = document.getElementById('chat-user-status');
+        chatStatus.innerText = 'Offline';
+        chatStatus.style.color = '#888';
     }
 });
 
