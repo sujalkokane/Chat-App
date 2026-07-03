@@ -19,8 +19,7 @@ const register = async (req, res) => {
       password: passwordHash,
     });
     await user.save();
-    return res.render("register", { message: "User Registered Successfully" });
-    res.redirect("/");
+   return res.redirect("/");
   } catch (error) {
     console.log(error.message);
   }

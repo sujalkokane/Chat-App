@@ -25,12 +25,14 @@
             --accent-soft:#eef0fe;
             --ok:#2fbf85;
             --radius:16px;
+            --surface:#fafbff;
+            --shadow:0 10px 30px rgba(20,24,40,.08);
         }
 
         *{ margin:0; padding:0; box-sizing:border-box; }
 
         body{
-            background:var(--bg);
+            background:linear-gradient(135deg,#eef2ff,#f8f9fc);
             font-family:'Inter',sans-serif;
             color:var(--ink);
             overflow-x:hidden;
@@ -51,6 +53,7 @@
             flex-direction:column;
             transition:margin-left .25s ease;
             z-index:10;
+            box-shadow:6px 0 24px rgba(0,0,0,.08);
         }
 
         .sidebar-header{
@@ -104,11 +107,13 @@
         }
 
         .chat-list-item:hover{
-            background:var(--panel-2);
+            background:#313751;
+            transform:translateX(4px);
         }
 
         .chat-list-item.active{
-            background:var(--accent);
+            background:linear-gradient(135deg,#5b6bf6,#7380ff);
+            box-shadow:0 8px 20px rgba(91,107,246,.35);
         }
 
         .chat-list-item .avatar-wrap{
@@ -221,6 +226,7 @@
             height:100vh;
             display:flex;
             flex-direction:column;
+            background:var(--surface);
         }
 
         .topbar{
@@ -326,6 +332,27 @@
             box-shadow:0 1px 2px rgba(0,0,0,.08);
         }
 
+        .msg-time{
+            font-size:10px;
+            opacity:.65;
+            margin-top:6px;
+            text-align:right;
+        }
+
+        .empty-state{
+            margin:auto;
+            text-align:center;
+            color:var(--muted);
+        }
+        .empty-state i{
+            font-size:64px;
+            color:#c5cae8;
+            margin-bottom:14px;
+        }
+        .empty-state h3{
+            margin-bottom:8px;
+        }
+
         .chat-input-bar{
             display:flex;
             align-items:center;
@@ -344,6 +371,13 @@
             border-radius:24px;
             padding:14px 18px;
             font-size:14px;
+            transition:.2s;
+            border:2px solid transparent;
+        }
+
+        .chat-input-bar input:focus{
+            border-color:#d6dcff;
+            background:#fff;
         }
 
         .chat-input-bar button{
@@ -398,7 +432,10 @@
                     </span>
                 </div>
                 <div>
-                    <div class="name"><%= u.name %></div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="name"><%= u.name %></div>
+                        <span id="unread-<%= u._id %>" style="display:none;width:10px;height:10px;border-radius:50%;background:#ff4d4f;flex-shrink:0;"></span>
+                    </div>
                     <div class="sub">Tap to chat</div>
                 </div>
             </div>
@@ -437,7 +474,7 @@
     <div class="chat-section">
 
         <div id="chat-header" class="chat-header" style="display:none;padding:16px 26px;align-items:center;gap:12px;">
-            <img id="chat-user-image" src="https://via.placeholder.com/44" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+            <img id="chat-user-image" src="https://via.placeholder.com/44" style="width:52px;height:52px;border-radius:50%;object-fit:cover;">
             <div style="flex:1;">
                 <div id="chat-user-name" style="font-weight:600;">Select a user</div>
                 <small id="chat-user-status" style="color:#2fbf85;">Offline</small>
@@ -445,7 +482,11 @@
         </div>
 
         <div id="chat-box" class="chat-body chat-empty">
-            Select a user from the left to start chatting.
+            <div class="empty-state">
+                <i class="bi bi-chat-square-heart"></i>
+                <h3>Select a conversation</h3>
+                <p>Choose a contact from the left to start messaging.</p>
+            </div>
         </div>
 
         <div id="chat-input" class="chat-input-bar" style="display:none;">
@@ -491,6 +532,10 @@ function setActiveChatItem(id){
 
 function openChat(id, name, image, isOnline) {
     receiver_id = id;
+    const unreadDot = document.getElementById('unread-' + id);
+    if (unreadDot) {
+        unreadDot.style.display = 'none';
+    }
     setActiveChatItem(id);
 
     document.getElementById('chat-header').style.display = 'flex';
@@ -619,6 +664,14 @@ socket.on('load-new-chat', function (data) {
     const chatBox = document.getElementById('chat-box');
     const sender = String(data.sender || data.sender_id);
     const receiver = String(data.receiver || data.receiver_id);
+
+    // Show unread indicator if a message arrives from a user whose chat isn't open
+    if (receiver === String(sender_id) && sender !== String(receiver_id)) {
+        const dot = document.getElementById('unread-' + sender);
+        if (dot) {
+            dot.style.display = 'inline-block';
+        }
+    }
 
     if (!((sender === sender_id && receiver === receiver_id) ||
           (sender === receiver_id && receiver === sender_id))) {
