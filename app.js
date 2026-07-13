@@ -9,10 +9,24 @@ const dotenv = require("dotenv");
 dotenv.config();
 const mongoose = require("mongoose");
 
+const PORT = process.env.PORT || 3000;
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/dynamic-chat-app";
+
+if (!process.env.SESSION_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET must be set in production");
+  }
+
+  process.env.SESSION_SECRET = "dev-session-secret-change-me";
+  console.warn("SESSION_SECRET is not set. Using a local development fallback.");
+}
+
 mongoose
-  .connect("mongodb://127.0.0.1:27017/dynamic-chat-app")
+  .connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
+
 const userRoute = require("./routes/userRoute");
 
 // Tell Express to use EJS
@@ -64,6 +78,6 @@ usp.on("connection", async (socket) => {
   });
 });
 
-http.listen(3000, () => {
-  console.log("Server running on port 3000");
+http.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

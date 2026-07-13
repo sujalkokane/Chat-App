@@ -26,13 +26,21 @@ cd "Chat App"
 npm install
 ```
 
-3. Create a `.env` file (if needed) with the following variables:
+3. Create a `.env` file from the example:
 
+```bash
+cp .env.example .env
 ```
+
+Then update the values as needed:
+
+```env
 PORT=3000
-MONGO_URI=your_mongo_connection_string
-SESSION_SECRET=some_secret
+MONGO_URI=mongodb://127.0.0.1:27017/dynamic-chat-app
+SESSION_SECRET=replace-with-a-long-random-secret
 ```
+
+`SESSION_SECRET` is required in production. Local development falls back to a temporary default if it is missing, but you should still set it in `.env`.
 
 ## Run
 
