@@ -557,7 +557,6 @@ function openChat(id, name, image, isOnline) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            sender: sender_id,
             receiver: receiver_id
         })
     })
@@ -596,7 +595,6 @@ document.getElementById('send-btn').addEventListener('click', function () {
     }
 
     socket.emit('new-chat', {
-        sender: sender_id,
         receiver: receiver_id,
         message: message
     });
@@ -627,11 +625,7 @@ logoutBtn.addEventListener('click', function (e) {
 </script>
 <script>
     var sender_id = '<%= user._id %>';
-   const socket = io("/user-namespace", {
-  query: {
-    token: sender_id
-  }
-});
+   const socket = io("/user-namespace");
 
 // Listen for users coming online
 socket.on('online-user', function(data) {

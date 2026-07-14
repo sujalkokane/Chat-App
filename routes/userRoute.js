@@ -4,17 +4,6 @@ const user_route = express.Router();
 
 const body_parser = require("body-parser");
 
-const session = require("express-session");
-const { SESSION_SECRET } = process.env;
-
-user_route.use(
-  session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  }),
-);
-
 user_route.use(body_parser.json());
 user_route.use(body_parser.urlencoded({ extended: true }));
 
@@ -49,8 +38,8 @@ user_route.get("/", auth.isLogout, userController.loadLogin);
 user_route.post("/", userController.login);
 user_route.get("/logout", auth.isLogin, userController.logout);
 user_route.get("/dashboard", auth.isLogin, userController.loadDashboard);
-user_route.post("/save-chat", userController.saveChat);
-user_route.post("/load-chat", userController.loadChat);
+user_route.post("/save-chat", auth.isLogin, userController.saveChat);
+user_route.post("/load-chat", auth.isLogin, userController.loadChat);
 user_route.use((req, res) => {
   res.status(404).redirect("/");
 });

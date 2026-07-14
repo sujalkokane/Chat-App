@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 
 const registerLoad = async (req, res) => {
   try {
@@ -108,10 +109,23 @@ const logout = async (req, res) => {
 
 const saveChat = async (req, res) => {
   try {
+    const sender = String(req.session.user_id);
+    const receiver = req.body.receiver;
+    const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
+
+    if (!mongoose.Types.ObjectId.isValid(receiver) || !message) {
+      return res.status(400).send({ message: "Receiver and message are required" });
+    }
+
+    const receiverExists = await User.exists({ _id: receiver });
+    if (!receiverExists) {
+      return res.status(404).send({ message: "Receiver not found" });
+    }
+
     var chat = new Chat({
-      sender: req.body.sender,
-      receiver: req.body.receiver,
-      message: req.body.message,
+      sender,
+      receiver,
+      message,
     });
 
     await chat.save();
@@ -122,15 +136,33 @@ const saveChat = async (req, res) => {
 };
 const loadChat = async (req, res) => {
   try {
+    const sender = String(req.session.user_id);
+    const receiver = req.body.receiver;
+
+    if (!mongoose.Types.ObjectId.isValid(receiver)) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver is required",
+      });
+    }
+
+    const receiverExists = await User.exists({ _id: receiver });
+    if (!receiverExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Receiver not found",
+      });
+    }
+
     const chats = await Chat.find({
       $or: [
         {
-          sender: req.body.sender,
-          receiver: req.body.receiver,
+          sender,
+          receiver,
         },
         {
-          sender: req.body.receiver,
-          receiver: req.body.sender,
+          sender: receiver,
+          receiver: sender,
         },
       ],
     }).sort({ createdAt: 1 });
